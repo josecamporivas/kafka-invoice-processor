@@ -117,6 +117,51 @@ The sample produces an XML document containing a total of `1190.00`:
 </Invoice>
 ```
 
+## REST API
+
+The service exposes a REST endpoint to inspect the invalid invoices stored in H2. The contract is defined API-first in [`src/main/resources/openapi/invalid-invoices-api.yaml`](src/main/resources/openapi/invalid-invoices-api.yaml).
+
+### List invalid invoices
+
+```http
+GET /api/v1/invalid-invoices?page=0&size=20&sort=receivedAt,desc
+```
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `page` | `0` | Zero-based page index |
+| `size` | `20` | Page size (1–100) |
+| `sort` | `receivedAt,desc` | `property,asc\|desc`; repeatable. Allowed properties: `id`, `invoiceId`, `receivedAt` |
+
+Example:
+
+```bash
+curl "http://localhost:8080/api/v1/invalid-invoices?page=0&size=2&sort=receivedAt,desc"
+```
+
+```json
+{
+  "content": [
+    {
+      "id": 3,
+      "invoiceId": "INV-20240101-003",
+      "reason": "amount must be greater than zero",
+      "receivedAt": "2024-01-03T10:00:00Z"
+    }
+  ],
+  "number": 0,
+  "size": 2,
+  "numberOfElements": 1,
+  "totalElements": 1,
+  "totalPages": 1,
+  "first": true,
+  "last": true,
+  "empty": false
+}
+```
+
+The raw invalid payload is not included in the list response because it is stored as a large LONGTEXT column.
+
 ## Technical Decisions
 
 ### Native Spring Kafka
@@ -139,6 +184,10 @@ Invalid invoices are stored in a file-backed H2 database for local development. 
 
 Jackson XML produces a deliberately small XML contract containing `Id`, `Country`, and VAT-inclusive `Total`. The total is calculated as `amount * (1 + vatRate)` for each line and rounded to two decimal places.
 
+### API-First REST endpoint
+
+The invalid invoice list endpoint is defined API-first in `src/main/resources/openapi/invalid-invoices-api.yaml`. The `openapi-generator-maven-plugin` (Spring generator, `interfaceOnly`) generates the `InvalidInvoicesApi` interface and the response DTOs into `target/generated-sources/openapi` at build time, and `InvalidInvoiceController` implements the generated interface. The spec uses the `x-spring-paginated` extension so the generated method receives a Spring `Pageable`; the service returns a Spring `Page<InvalidInvoice>` that is mapped to the generated `InvalidInvoicePage` DTO. Spring Data JPA and springdoc already provide `Pageable` resolution and documentation, so no additional runtime dependency is required.
+
 ### Error handling
 
 Business validation and JSON errors are persisted and acknowledged. Publishing, transformation, and infrastructure failures are allowed to propagate to Spring Kafka's `DefaultErrorHandler`, which retries twice before recovery.
@@ -155,14 +204,14 @@ Run the complete test suite:
 ./mvnw test
 ```
 
-The suite includes validation and XML unit tests, an H2 repository test, an application context test, and an embedded Kafka end-to-end test. It does not require Docker, the external Kafka broker, or a separate database.
+The suite includes validation and XML unit tests, an H2 repository test, an application context test, a MockMvc pagination test for the REST endpoint, and an embedded Kafka end-to-end test. It does not require Docker, the external Kafka broker, or a separate database.
 
 ## Developer Consoles
 
 - H2 console: `http://localhost:8080/h2-console`
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 
-> The service is Kafka-based and does not expose business REST endpoints. Swagger is included but not required for the exercise.
+> The Kafka processing path does not require REST, but the invalid invoice list endpoint is documented in Swagger UI.
 
 ## Repository Hygiene
 

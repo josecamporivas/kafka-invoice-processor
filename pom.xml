@@ -14,6 +14,7 @@
 	<properties>
 		<java.version>27</java.version>
 		<springdoc.version>2.8.17</springdoc.version>
+		<openapi-generator.version>7.26.0</openapi-generator.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -71,6 +72,33 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+
+			<plugin>
+				<groupId>org.openapitools</groupId>
+				<artifactId>openapi-generator-maven-plugin</artifactId>
+				<version>${openapi-generator.version}</version>
+				<executions>
+					<execution>
+						<id>generate-invalid-invoices-api</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${project.basedir}/src/main/resources/openapi/invalid-invoices-api.yaml</inputSpec>
+							<generatorName>spring</generatorName>
+							<apiPackage>com.josecamporivas.exercise.invoice_processor.api</apiPackage>
+							<modelPackage>com.josecamporivas.exercise.invoice_processor.api.model</modelPackage>
+							<configOptions>
+								<interfaceOnly>true</interfaceOnly>
+								<useSpringBoot3>true</useSpringBoot3>
+								<useTags>true</useTags>
+								<openApiNullable>false</openApiNullable>
+								<hideGenerationTimestamp>true</hideGenerationTimestamp>
+							</configOptions>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

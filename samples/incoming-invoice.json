@@ -1,13 +1,1 @@
-{
-  "invoiceId": "INV-20240101-001",
-  "customerId": "12345678A",
-  "country": "DE",
-  "issueDate": "2024-01-01",
-  "lines": [
-    {
-      "description": "Laptop",
-      "amount": 1000,
-      "vatRate": 0.19
-    }
-  ]
-}
+{"invoiceId":"INV-20240101-001","customerId":"12345678A","country":"DE","issueDate":"2024-01-01","lines":[{"description":"Laptop","amount":1000,"vatRate":0.19}]}

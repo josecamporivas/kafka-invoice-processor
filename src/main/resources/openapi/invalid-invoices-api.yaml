@@ -1,0 +1,123 @@
+openapi: 3.0.3
+info:
+  title: Invoice Processor API
+  description: REST API to inspect invalid electronic invoices.
+  version: 0.0.1
+paths:
+  /api/v1/invalid-invoices:
+    get:
+      tags:
+        - Invalid Invoices
+      operationId: listInvalidInvoices
+      summary: List invalid invoices
+      description: Returns invalid invoices stored by the processor, ordered by received date descending by default.
+      x-spring-paginated: true
+      parameters:
+        - name: page
+          in: query
+          description: Zero-based page index.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Number of items per page.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort
+          in: query
+          description: "Sorting criteria in the format: property,(asc|desc). Allowed properties: id, invoiceId, receivedAt. Multiple sort parameters can be provided."
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              example: receivedAt,desc
+      responses:
+        "200":
+          description: A page of invalid invoices.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidInvoicePage"
+components:
+  schemas:
+    InvalidInvoiceResponse:
+      type: object
+      description: A stored invalid invoice.
+      required:
+        - id
+        - reason
+        - receivedAt
+      properties:
+        id:
+          type: integer
+          format: int64
+        invoiceId:
+          type: string
+          nullable: true
+          description: Invoice identifier when it could be extracted from the payload.
+        reason:
+          type: string
+          description: Why the invoice was rejected.
+        receivedAt:
+          type: string
+          format: date-time
+          description: When the invalid invoice was received.
+    InvalidInvoicePage:
+      type: object
+      description: A page of invalid invoices.
+      required:
+        - content
+        - number
+        - size
+        - numberOfElements
+        - totalElements
+        - totalPages
+        - first
+        - last
+        - empty
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvalidInvoiceResponse"
+        number:
+          type: integer
+          format: int32
+          description: Current page index.
+        size:
+          type: integer
+          format: int32
+          description: Page size.
+        numberOfElements:
+          type: integer
+          format: int32
+          description: Number of items in the current page.
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of invalid invoices.
+        totalPages:
+          type: integer
+          format: int32
+          description: Total number of pages.
+        first:
+          type: boolean
+          description: Whether this is the first page.
+        last:
+          type: boolean
+          description: Whether this is the last page.
+        empty:
+          type: boolean
+          description: Whether the page has no items.
